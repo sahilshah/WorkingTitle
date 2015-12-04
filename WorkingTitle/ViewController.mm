@@ -51,19 +51,18 @@ const Scalar WHITE     = Scalar(255,255,255);
     
     // Do any additional setup after loading the view, typically from a nib.
     
+    
     // 1. Setup the your OpenCV view, so it takes up the entire App screen......
     int view_width = self.view.frame.size.width;
     int view_height = (640*view_width)/480; // Work out the viw-height assuming 640x480 input
     int view_offset = (self.view.frame.size.height - view_height)/2;
     liveView_ = [[UIImageView alloc] initWithFrame:CGRectMake(0.0, view_offset, view_width, view_height)];
     [self.view addSubview:liveView_]; // Important: add liveView_ as a subview
-
-    
     //resultView_ = [[UIImageView alloc] initWithFrame:CGRectMake(0.0, 0.0, 960, 1280)];
     resultView_ = [[UIImageView alloc] initWithFrame:CGRectMake(0.0, view_offset, view_width, view_height)];
     [self.view addSubview:resultView_]; // Important: add resultView_ as a subview
     resultView_.hidden = true; // Hide the view
-    
+
     
     // 2. First setup a button to take a single picture
     takephotoButton_ = [self simpleButton:@"Take Photo" buttonColor:[UIColor redColor]];
@@ -124,10 +123,10 @@ const Scalar WHITE     = Scalar(255,255,255);
     cout << "cvImage Size is: " << cvImage.size() << endl;
     cout << "Image Size is: " << image.size.height << " " << image.size.width << endl;
     
-    cv::resize(cvImage,cvImage,cv::Size(),0.5,0.5,CV_INTER_CUBIC );
+//    cv::resize(cvImage,cvImage,cv::Size(),0.5,0.5,CV_INTER_CUBIC );
     cv::cvtColor(cvImage,cvImage,CV_RGBA2RGB);
     cv_image<rgb_pixel> cimg(cvImage);
-    
+
     cout << cimg.nc() << " " << cimg.nr() << endl;
     
     std::vector<dlib::rectangle> faces = fd(cimg);
