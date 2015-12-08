@@ -123,7 +123,7 @@ const Scalar WHITE     = Scalar(255,255,255);
     cout << "cvImage Size is: " << cvImage.size() << endl;
     cout << "Image Size is: " << image.size.height << " " << image.size.width << endl;
     
-//    cv::resize(cvImage,cvImage,cv::Size(),0.5,0.5,CV_INTER_CUBIC );
+    cv::resize(cvImage,cvImage,cv::Size(480/2,640/2), 0, 0,CV_INTER_CUBIC );
     cv::cvtColor(cvImage,cvImage,CV_RGBA2RGB);
     cv_image<rgb_pixel> cimg(cvImage);
 
