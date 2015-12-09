@@ -128,72 +128,83 @@ const Scalar WHITE     = Scalar(255,255,255);
     cv_image<rgb_pixel> cimg(cvImage);
 
     cout << cimg.nc() << " " << cimg.nr() << endl;
+
+    NSDate *methodStart = [NSDate date];
     
     std::vector<dlib::rectangle> faces = fd(cimg);
     
+    NSDate *methodFinish = [NSDate date];
+    NSTimeInterval executionTime = [methodFinish timeIntervalSinceDate:methodStart];
+    cout << "Execution time of Face Detection: " << executionTime << endl;
+    
     if(faces.size() > 0){
         cout << "Found face" << endl;
+        methodStart = [NSDate date];
         full_object_detection d = pm(cimg, faces[0]);
+        methodFinish = [NSDate date];
+        executionTime = [methodFinish timeIntervalSinceDate:methodStart];
+        cout << "Execution time of Face Alignment: " << executionTime << endl;
 
-        
-        cv::line(cvImage,cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
-                 cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
-        cv::line(cvImage,cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),
-                 cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
-        cv::line(cvImage,cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
-                 cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),GREEN);
-        cv::line(cvImage,cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),
-                 cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),GREEN);
-        
-        for(int i = 0; i < d.num_parts(); i++){
-            cv::circle(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),1, RED);
-        }
-        
-        for (int i = 1; i <= 16; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-
-        for (int i = 28; i <= 30; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-
-        for (int i = 18; i <= 21; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        for (int i = 23; i <= 26; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        for (int i = 31; i <= 35; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        cv::line(cvImage, cv::Point(d.part(30).x(),d.part(30).y()),
-                 cv::Point(d.part((35)).x(),d.part((35)).y()), BLUE);
-
-        
-        for (int i = 37; i <= 41; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        cv::line(cvImage, cv::Point(d.part(36).x(),d.part(36).y()),
-                 cv::Point(d.part((41)).x(),d.part((41)).y()), BLUE);
-
-        
-        for (int i = 43; i <= 47; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        cv::line(cvImage, cv::Point(d.part(42).x(),d.part(42).y()),
-                 cv::Point(d.part((47)).x(),d.part((47)).y()), BLUE);
-
-        for (int i = 49; i <= 59; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        cv::line(cvImage, cv::Point(d.part(48).x(),d.part(48).y()),
-                 cv::Point(d.part((59)).x(),d.part((59)).y()), BLUE);
-
-        for (int i = 61; i <= 67; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        cv::line(cvImage, cv::Point(d.part(60).x(),d.part(60).y()),
-                 cv::Point(d.part((67)).x(),d.part((67)).y()), BLUE);
+//
+//        
+//        cv::line(cvImage,cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
+//                 cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
+//        cv::line(cvImage,cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),
+//                 cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
+//        cv::line(cvImage,cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
+//                 cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),GREEN);
+//        cv::line(cvImage,cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),
+//                 cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),GREEN);
+//        
+//        for(int i = 0; i < d.num_parts(); i++){
+//            cv::circle(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),1, RED);
+//        }
+//        
+//        for (int i = 1; i <= 16; i++)
+//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
+//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
+//
+//        for (int i = 28; i <= 30; i++)
+//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
+//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
+//
+//        for (int i = 18; i <= 21; i++)
+//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
+//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
+//        for (int i = 23; i <= 26; i++)
+//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
+//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
+//        for (int i = 31; i <= 35; i++)
+//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
+//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
+//        cv::line(cvImage, cv::Point(d.part(30).x(),d.part(30).y()),
+//                 cv::Point(d.part((35)).x(),d.part((35)).y()), BLUE);
+//
+//        
+//        for (int i = 37; i <= 41; i++)
+//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
+//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
+//        cv::line(cvImage, cv::Point(d.part(36).x(),d.part(36).y()),
+//                 cv::Point(d.part((41)).x(),d.part((41)).y()), BLUE);
+//
+//        
+//        for (int i = 43; i <= 47; i++)
+//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
+//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
+//        cv::line(cvImage, cv::Point(d.part(42).x(),d.part(42).y()),
+//                 cv::Point(d.part((47)).x(),d.part((47)).y()), BLUE);
+//
+//        for (int i = 49; i <= 59; i++)
+//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
+//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
+//        cv::line(cvImage, cv::Point(d.part(48).x(),d.part(48).y()),
+//                 cv::Point(d.part((59)).x(),d.part((59)).y()), BLUE);
+//
+//        for (int i = 61; i <= 67; i++)
+//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
+//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
+//        cv::line(cvImage, cv::Point(d.part(60).x(),d.part(60).y()),
+//                 cv::Point(d.part((67)).x(),d.part((67)).y()), BLUE);
 
         
     }
