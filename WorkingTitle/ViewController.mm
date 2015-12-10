@@ -108,32 +108,27 @@ const Scalar WHITE     = Scalar(255,255,255);
 - (void)liveWasPressed {
     [takephotoButton_ setHidden:false]; [goliveButton_ setHidden:true]; // Switch visibility of buttons
     resultView_.hidden = true; // Hide the result view again
-    [photoCamera_ start];
+//    [photoCamera_ start];
 }
 
 // To be compliant with the CvPhotoCameraDelegate we need to implement these two methods
 - (void)photoCamera:(CvPhotoCamera *)photoCamera capturedImage:(UIImage *)image
 {
-    [photoCamera_ stop];
+//    [photoCamera_ stop];
     resultView_.hidden = false; // Turn the hidden view on
-//    cv::Mat cvImage;
-    
-//    UIImageToMat(image, cvImage);
     
     CGImageRef x = [image CGImage];
     CFDataRef x1 = CGDataProviderCopyData(CGImageGetDataProvider(x));
     const unsigned char *buffer = CFDataGetBytePtr(x1);
+ 
+    size_t bpr = CGImageGetBytesPerRow(x);
+    size_t w = CGImageGetWidth(x);
+    size_t h = CGImageGetHeight(x);
     
-    int bpp = CGImageGetBitsPerPixel(x);
-    int bpr = CGImageGetBytesPerRow(x);
-    int w = CGImageGetWidth(x);
-    int h = CGImageGetHeight(x);
-    
-    cv::Mat cvImage(h,w,CV_8UC4, (void*)buffer,(size_t)bpr);
-    
+    cv::Mat cvImage((int)h,(int)w,CV_8UC4, (void*)buffer,(size_t)bpr);
     cvImage = cvImage.t();
-    cout << "cvImage Size is: " << cvImage.size() << endl;
-    cout << "Image Size is: " << image.size.height << " " << image.size.width << endl;
+    
+    cv::Mat cvFImage(cvImage);
     
     cv::resize(cvImage,cvImage,cv::Size(480/2,640/2), 0, 0,CV_INTER_CUBIC );
     cv::cvtColor(cvImage,cvImage,CV_RGBA2RGB);
@@ -144,23 +139,22 @@ const Scalar WHITE     = Scalar(255,255,255);
     std::vector<dlib::rectangle> faces = fd(cimg);
     
     if(faces.size() > 0){
-        cout << "Found face" << endl;
         full_object_detection d = pm(cimg, faces[0]);
 
         
-        cv::line(cvImage,cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
-                 cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
-        cv::line(cvImage,cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),
-                 cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
-        cv::line(cvImage,cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
-                 cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),GREEN);
-        cv::line(cvImage,cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),
-                 cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),GREEN);
+//        cv::line(cvFImage,2*cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
+//                 2*cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
+//        cv::line(cvFImage,2*cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),
+//                 2*cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
+//        cv::line(cvFImage,2*cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
+//                 2*cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),GREEN);
+//        cv::line(cvFImage,2*cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),
+//                 2*cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),GREEN);
         
         for(int i = 0; i < d.num_parts(); i++){
-            cv::circle(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),1, RED);
+            cv::circle(cvFImage, 2*cv::Point(d.part(i).x(),d.part(i).y()),2, RED);
         }
-        
+    
         for (int i = 1; i <= 16; i++)
             cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
                      cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
@@ -209,17 +203,14 @@ const Scalar WHITE     = Scalar(255,255,255);
 
         
     }
-    else{
-        cout << "Could not find face!" << endl;
-    }
     
-    cvImage = cvImage.t();
-    UIImage *resImage = MatToUIImage(cvImage);
+    cvFImage = cvFImage.t();
+    UIImage *resImage = MatToUIImage(cvFImage);
     
     cout << "Rendering Image" << endl;
     
     resultView_.image =  [UIImage imageWithCGImage:[resImage CGImage]
-                                             scale:2.0
+                                             scale:1.0
                                        orientation: UIImageOrientationLeftMirrored];
     
     [takephotoButton_ setHidden:true]; [goliveButton_ setHidden:false]; // Switch visibility of buttons
