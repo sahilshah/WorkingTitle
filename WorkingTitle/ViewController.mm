@@ -116,113 +116,26 @@ const Scalar WHITE     = Scalar(255,255,255);
 {
     [photoCamera_ stop];
     resultView_.hidden = false; // Turn the hidden view on
-    cv::Mat cvImage;
+   
+    CGImageRef x = [image CGImage];
+    CFDataRef x1 = CGDataProviderCopyData(CGImageGetDataProvider(x));
+    const unsigned char *buffer = CFDataGetBytePtr(x1);
     
-    UIImageToMat(image, cvImage);
-    cvImage = cvImage.t();
-    cout << "cvImage Size is: " << cvImage.size() << endl;
-    cout << "Image Size is: " << image.size.height << " " << image.size.width << endl;
-    
-    cv::resize(cvImage,cvImage,cv::Size(480/2,640/2), 0, 0,CV_INTER_CUBIC );
-    cv::cvtColor(cvImage,cvImage,CV_RGBA2RGB);
-    cv_image<rgb_pixel> cimg(cvImage);
+    int bpp = CGImageGetBitsPerPixel(x);
+    int bpr = CGImageGetBytesPerRow(x);
+    int w = CGImageGetWidth(x);
+    int h = CGImageGetHeight(x);
 
-    cout << cimg.nc() << " " << cimg.nr() << endl;
-
-    NSDate *methodStart = [NSDate date];
+    cv::Mat cvi(h,w,CV_8UC4, (void*)buffer,(size_t)bpr);
     
-    std::vector<dlib::rectangle> faces = fd(cimg);
+    UIImage *resImage = MatToUIImage(cvi);
     
-    NSDate *methodFinish = [NSDate date];
-    NSTimeInterval executionTime = [methodFinish timeIntervalSinceDate:methodStart];
-    cout << "Execution time of Face Detection: " << executionTime << endl;
-    
-    if(faces.size() > 0){
-        cout << "Found face" << endl;
-        methodStart = [NSDate date];
-        full_object_detection d = pm(cimg, faces[0]);
-        methodFinish = [NSDate date];
-        executionTime = [methodFinish timeIntervalSinceDate:methodStart];
-        cout << "Execution time of Face Alignment: " << executionTime << endl;
-
-//
-//        
-//        cv::line(cvImage,cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
-//                 cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
-//        cv::line(cvImage,cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),
-//                 cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
-//        cv::line(cvImage,cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
-//                 cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),GREEN);
-//        cv::line(cvImage,cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),
-//                 cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),GREEN);
-//        
-//        for(int i = 0; i < d.num_parts(); i++){
-//            cv::circle(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),1, RED);
-//        }
-//        
-//        for (int i = 1; i <= 16; i++)
-//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-//
-//        for (int i = 28; i <= 30; i++)
-//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-//
-//        for (int i = 18; i <= 21; i++)
-//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-//        for (int i = 23; i <= 26; i++)
-//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-//        for (int i = 31; i <= 35; i++)
-//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-//        cv::line(cvImage, cv::Point(d.part(30).x(),d.part(30).y()),
-//                 cv::Point(d.part((35)).x(),d.part((35)).y()), BLUE);
-//
-//        
-//        for (int i = 37; i <= 41; i++)
-//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-//        cv::line(cvImage, cv::Point(d.part(36).x(),d.part(36).y()),
-//                 cv::Point(d.part((41)).x(),d.part((41)).y()), BLUE);
-//
-//        
-//        for (int i = 43; i <= 47; i++)
-//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-//        cv::line(cvImage, cv::Point(d.part(42).x(),d.part(42).y()),
-//                 cv::Point(d.part((47)).x(),d.part((47)).y()), BLUE);
-//
-//        for (int i = 49; i <= 59; i++)
-//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-//        cv::line(cvImage, cv::Point(d.part(48).x(),d.part(48).y()),
-//                 cv::Point(d.part((59)).x(),d.part((59)).y()), BLUE);
-//
-//        for (int i = 61; i <= 67; i++)
-//            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-//                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-//        cv::line(cvImage, cv::Point(d.part(60).x(),d.part(60).y()),
-//                 cv::Point(d.part((67)).x(),d.part((67)).y()), BLUE);
-
-        
-    }
-    else{
-        cout << "Could not find face!" << endl;
-    }
-    
-    cvImage = cvImage.t();
-    UIImage *resImage = MatToUIImage(cvImage);
-    
-    cout << "Rendering Image" << endl;
-    
-    resultView_.image =  [UIImage imageWithCGImage:[resImage CGImage]
-                                             scale:2.0
-                                       orientation: UIImageOrientationLeftMirrored];
+    resultView_.image = [UIImage imageWithCGImage:[resImage CGImage]
+                                            scale:1.0
+                                      orientation: UIImageOrientationLeftMirrored];
+//    resultView_.image = resImage;
     
     [takephotoButton_ setHidden:true]; [goliveButton_ setHidden:false]; // Switch visibility of buttons
-
     
 }
 - (void)photoCameraCancel:(CvPhotoCamera *)photoCamera
