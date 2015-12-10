@@ -116,9 +116,21 @@ const Scalar WHITE     = Scalar(255,255,255);
 {
     [photoCamera_ stop];
     resultView_.hidden = false; // Turn the hidden view on
-    cv::Mat cvImage;
+//    cv::Mat cvImage;
     
-    UIImageToMat(image, cvImage);
+//    UIImageToMat(image, cvImage);
+    
+    CGImageRef x = [image CGImage];
+    CFDataRef x1 = CGDataProviderCopyData(CGImageGetDataProvider(x));
+    const unsigned char *buffer = CFDataGetBytePtr(x1);
+    
+    int bpp = CGImageGetBitsPerPixel(x);
+    int bpr = CGImageGetBytesPerRow(x);
+    int w = CGImageGetWidth(x);
+    int h = CGImageGetHeight(x);
+    
+    cv::Mat cvImage(h,w,CV_8UC4, (void*)buffer,(size_t)bpr);
+    
     cvImage = cvImage.t();
     cout << "cvImage Size is: " << cvImage.size() << endl;
     cout << "Image Size is: " << image.size.height << " " << image.size.width << endl;
