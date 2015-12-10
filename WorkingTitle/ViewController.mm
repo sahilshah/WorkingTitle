@@ -108,100 +108,74 @@ const Scalar WHITE     = Scalar(255,255,255);
 - (void)liveWasPressed {
     [takephotoButton_ setHidden:false]; [goliveButton_ setHidden:true]; // Switch visibility of buttons
     resultView_.hidden = true; // Hide the result view again
-//    [photoCamera_ start];
+    [photoCamera_ start];
 }
 
 // To be compliant with the CvPhotoCameraDelegate we need to implement these two methods
 - (void)photoCamera:(CvPhotoCamera *)photoCamera capturedImage:(UIImage *)image
 {
-//    [photoCamera_ stop];
+    [photoCamera_ stop];
     resultView_.hidden = false; // Turn the hidden view on
     
+    // get image data in buffer and create opencv image
     CGImageRef x = [image CGImage];
     CFDataRef x1 = CGDataProviderCopyData(CGImageGetDataProvider(x));
     const unsigned char *buffer = CFDataGetBytePtr(x1);
- 
     size_t bpr = CGImageGetBytesPerRow(x);
     size_t w = CGImageGetWidth(x);
     size_t h = CGImageGetHeight(x);
-    
     cv::Mat cvImage((int)h,(int)w,CV_8UC4, (void*)buffer,(size_t)bpr);
-    cvImage = cvImage.t();
     
+    // clone image for maintaing a full scale copy
+    cvImage = cvImage.t();
     cv::Mat cvFImage(cvImage);
     
     cv::resize(cvImage,cvImage,cv::Size(480/2,640/2), 0, 0,CV_INTER_CUBIC );
     cv::cvtColor(cvImage,cvImage,CV_RGBA2RGB);
     cv_image<rgb_pixel> cimg(cvImage);
+    
+    UIImage *tImage = MatToUIImage(cvFImage);
+//    UIImage *tImage = scaleAndRotateImage(image);
 
-    cout << cimg.nc() << " " << cimg.nr() << endl;
+    // Create FD and apply on image
+    NSDictionary *detectorOptions = @{ CIDetectorAccuracy : CIDetectorAccuracyLow };
+    CIDetector *faceDetector = [CIDetector detectorOfType:CIDetectorTypeFace context:nil options:detectorOptions];
+    NSArray *features = [faceDetector featuresInImage:[CIImage imageWithCGImage: [tImage CGImage]]];
     
-    std::vector<dlib::rectangle> faces = fd(cimg);
-    
-    if(faces.size() > 0){
-        full_object_detection d = pm(cimg, faces[0]);
+    // Loop through each detected face
+    for(CIFaceFeature* faceFeature in features) {
+        cout << "Found Face from Detector " << endl;
+        CGPoint o = faceFeature.bounds.origin;
+        CGSize s = faceFeature.bounds.size;
+        cv::Point p1(o.x,640 - o.y);
+        cv::Point p2(o.x + s.width, 640 - o.y);
+        cv::Point p3(o.x + s.width, 640 - o.y - s.height);
+        cv::Point p4(o.x, 640 - o.y - s.height);
+        
+        cv::line(cvFImage,p1,p2,BLUE);
+        cv::line(cvFImage,p2,p3,BLUE);
+        cv::line(cvFImage,p3,p4,BLUE);
+        cv::line(cvFImage,p4,p1,BLUE);
 
         
-//        cv::line(cvFImage,2*cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
-//                 2*cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
-//        cv::line(cvFImage,2*cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),
-//                 2*cv::Point(faces[0].bl_corner().x(),faces[0].bl_corner().y()),GREEN);
-//        cv::line(cvFImage,2*cv::Point(faces[0].br_corner().x(),faces[0].br_corner().y()),
-//                 2*cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),GREEN);
-//        cv::line(cvFImage,2*cv::Point(faces[0].tr_corner().x(),faces[0].tr_corner().y()),
-//                 2*cv::Point(faces[0].tl_corner().x(),faces[0].tl_corner().y()),GREEN);
+        // get pose from dlib pose model
+        dlib::rectangle face(dlib::point(o.x + 0.1 * s.width, (640 - o.y) - 0.9 * s.height ),
+                             dlib::point(o.x + 0.9 * s.width, (640 - o.y) - 0.1 * s.height));
         
+        cv::line(cvFImage,cv::Point(face.br_corner().x(),face.br_corner().y()),
+                 cv::Point(face.bl_corner().x(),face.bl_corner().y()),GREEN);
+        cv::line(cvFImage,cv::Point(face.tl_corner().x(),face.tl_corner().y()),
+                 cv::Point(face.bl_corner().x(),face.bl_corner().y()),GREEN);
+        cv::line(cvFImage,cv::Point(face.br_corner().x(),face.br_corner().y()),
+                 cv::Point(face.tr_corner().x(),face.tr_corner().y()),GREEN);
+        cv::line(cvFImage,cv::Point(face.tr_corner().x(),face.tr_corner().y()),
+                 cv::Point(face.tl_corner().x(),face.tl_corner().y()),GREEN);
+        
+        full_object_detection d = pm(cimg, face);
         for(int i = 0; i < d.num_parts(); i++){
-            cv::circle(cvFImage, 2*cv::Point(d.part(i).x(),d.part(i).y()),2, RED);
+            cv::circle(cvFImage, cv::Point(d.part(i).x(),d.part(i).y()),2, RED);
         }
-    
-        for (int i = 1; i <= 16; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
 
-        for (int i = 28; i <= 30; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-
-        for (int i = 18; i <= 21; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        for (int i = 23; i <= 26; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        for (int i = 31; i <= 35; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        cv::line(cvImage, cv::Point(d.part(30).x(),d.part(30).y()),
-                 cv::Point(d.part((35)).x(),d.part((35)).y()), BLUE);
-
-        
-        for (int i = 37; i <= 41; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        cv::line(cvImage, cv::Point(d.part(36).x(),d.part(36).y()),
-                 cv::Point(d.part((41)).x(),d.part((41)).y()), BLUE);
-
-        
-        for (int i = 43; i <= 47; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        cv::line(cvImage, cv::Point(d.part(42).x(),d.part(42).y()),
-                 cv::Point(d.part((47)).x(),d.part((47)).y()), BLUE);
-
-        for (int i = 49; i <= 59; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        cv::line(cvImage, cv::Point(d.part(48).x(),d.part(48).y()),
-                 cv::Point(d.part((59)).x(),d.part((59)).y()), BLUE);
-
-        for (int i = 61; i <= 67; i++)
-            cv::line(cvImage, cv::Point(d.part(i).x(),d.part(i).y()),
-                     cv::Point(d.part((i-1)).x(),d.part((i-1)).y()), BLUE);
-        cv::line(cvImage, cv::Point(d.part(60).x(),d.part(60).y()),
-                 cv::Point(d.part((67)).x(),d.part((67)).y()), BLUE);
-
-        
     }
     
     cvFImage = cvFImage.t();
@@ -213,8 +187,7 @@ const Scalar WHITE     = Scalar(255,255,255);
                                              scale:1.0
                                        orientation: UIImageOrientationLeftMirrored];
     
-    [takephotoButton_ setHidden:true]; [goliveButton_ setHidden:false]; // Switch visibility of buttons
-
+    [takephotoButton_ setHidden:true]; [goliveButton_ setHidden:false];
     
 }
 - (void)photoCameraCancel:(CvPhotoCamera *)photoCamera
@@ -247,6 +220,114 @@ const Scalar WHITE     = Scalar(255,255,255);
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+UIImage *scaleAndRotateImage(UIImage *image)
+{
+    int kMaxResolution = 640; // Or whatever
+    
+    CGImageRef imgRef = image.CGImage;
+    
+    CGFloat width = CGImageGetWidth(imgRef);
+    CGFloat height = CGImageGetHeight(imgRef);
+    
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    CGRect bounds = CGRectMake(0, 0, width, height);
+    if (width > kMaxResolution || height > kMaxResolution) {
+        CGFloat ratio = width/height;
+        if (ratio > 1) {
+            bounds.size.width = kMaxResolution;
+            bounds.size.height = bounds.size.width / ratio;
+        }
+        else {
+            bounds.size.height = kMaxResolution;
+            bounds.size.width = bounds.size.height * ratio;
+        }
+    }
+    
+    CGFloat scaleRatio = bounds.size.width / width;
+    CGSize imageSize = CGSizeMake(CGImageGetWidth(imgRef), CGImageGetHeight(imgRef));
+    CGFloat boundHeight;
+    UIImageOrientation orient = image.imageOrientation;
+    switch(orient) {
+            
+        case UIImageOrientationUp: //EXIF = 1
+            transform = CGAffineTransformIdentity;
+            break;
+            
+        case UIImageOrientationUpMirrored: //EXIF = 2
+            transform = CGAffineTransformMakeTranslation(imageSize.width, 0.0);
+            transform = CGAffineTransformScale(transform, -1.0, 1.0);
+            break;
+            
+        case UIImageOrientationDown: //EXIF = 3
+            transform = CGAffineTransformMakeTranslation(imageSize.width, imageSize.height);
+            transform = CGAffineTransformRotate(transform, M_PI);
+            break;
+            
+        case UIImageOrientationDownMirrored: //EXIF = 4
+            transform = CGAffineTransformMakeTranslation(0.0, imageSize.height);
+            transform = CGAffineTransformScale(transform, 1.0, -1.0);
+            break;
+            
+        case UIImageOrientationLeftMirrored: //EXIF = 5
+            boundHeight = bounds.size.height;
+            bounds.size.height = bounds.size.width;
+            bounds.size.width = boundHeight;
+            transform = CGAffineTransformMakeTranslation(imageSize.height, imageSize.width);
+            transform = CGAffineTransformScale(transform, -1.0, 1.0);
+            transform = CGAffineTransformRotate(transform, 3.0 * M_PI / 2.0);
+            break;
+            
+        case UIImageOrientationLeft: //EXIF = 6
+            boundHeight = bounds.size.height;
+            bounds.size.height = bounds.size.width;
+            bounds.size.width = boundHeight;
+            transform = CGAffineTransformMakeTranslation(0.0, imageSize.width);
+            transform = CGAffineTransformRotate(transform, 3.0 * M_PI / 2.0);
+            break;
+            
+        case UIImageOrientationRightMirrored: //EXIF = 7
+            boundHeight = bounds.size.height;
+            bounds.size.height = bounds.size.width;
+            bounds.size.width = boundHeight;
+            transform = CGAffineTransformMakeScale(-1.0, 1.0);
+            transform = CGAffineTransformRotate(transform, M_PI / 2.0);
+            break;
+            
+        case UIImageOrientationRight: //EXIF = 8
+            boundHeight = bounds.size.height;
+            bounds.size.height = bounds.size.width;
+            bounds.size.width = boundHeight;
+            transform = CGAffineTransformMakeTranslation(imageSize.height, 0.0);
+            transform = CGAffineTransformRotate(transform, M_PI / 2.0);
+            break;
+            
+        default:
+            [NSException raise:NSInternalInconsistencyException format:@"Invalid image orientation"];
+            
+    }
+    
+    UIGraphicsBeginImageContext(bounds.size);
+    
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    
+    if (orient == UIImageOrientationRight || orient == UIImageOrientationLeft) {
+        CGContextScaleCTM(context, -scaleRatio, scaleRatio);
+        CGContextTranslateCTM(context, -height, 0);
+    }
+    else {
+        CGContextScaleCTM(context, scaleRatio, -scaleRatio);
+        CGContextTranslateCTM(context, 0, -height);
+    }
+    
+    CGContextConcatCTM(context, transform);
+    
+    CGContextDrawImage(UIGraphicsGetCurrentContext(), CGRectMake(0, 0, width, height), imgRef);
+    UIImage *imageCopy = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();  
+    
+    return imageCopy;  
 }
 
 @end
